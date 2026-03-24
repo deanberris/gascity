@@ -151,6 +151,11 @@ func cmdSessionNew(args []string, alias, title string, noAttach bool, stdout, st
 	// via findAgentByTemplate (which compares against QualifiedName()).
 	canonicalTemplate := found.QualifiedName()
 
+	// Default the bead title to alias or template name when not provided,
+	// matching session_template_start.go behaviour. Without a title the
+	// beads store rejects the create ("title is required").
+	title = defaultSessionTitle(title, alias, canonicalTemplate)
+
 	// Try reconciler-first path: create bead, poke controller.
 	// For singleton agents, pass the canonical template name as selfOwner
 	// so the alias reservation check recognises a new session bead as the
@@ -1021,6 +1026,20 @@ func resolveWorkDir(cityPath string, cfg *config.City, agent *config.Agent) (str
 		rigs = cfg.Rigs
 	}
 	return resolveConfiguredWorkDir(cityPath, cityName, agent, rigs)
+}
+
+// defaultSessionTitle returns a non-empty title for a session bead.
+// It prefers an explicit title, falls back to the alias, and finally
+// uses the canonical template name. This mirrors the behaviour in
+// session_template_start.go which always sets title to the agent identity.
+func defaultSessionTitle(title, alias, canonicalTemplate string) string {
+	if title != "" {
+		return title
+	}
+	if alias != "" {
+		return alias
+	}
+	return canonicalTemplate
 }
 
 func shouldAttachNewSession(noAttach bool, transport string) bool {

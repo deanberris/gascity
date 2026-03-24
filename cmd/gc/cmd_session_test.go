@@ -131,6 +131,31 @@ func TestResolveWorkDir(t *testing.T) {
 // (resolveAgentIdentity, sessionName, Provider.Nudge) each have dedicated
 // tests. The CLI layer (cmdSessionNudge) is a thin integration wrapper.
 
+func TestDefaultSessionTitle(t *testing.T) {
+	tests := []struct {
+		name              string
+		title             string
+		alias             string
+		canonicalTemplate string
+		want              string
+	}{
+		{name: "explicit title wins", title: "my session", alias: "myalias", canonicalTemplate: "gc/lead", want: "my session"},
+		{name: "falls back to alias", title: "", alias: "gc/lead", canonicalTemplate: "gc/lead", want: "gc/lead"},
+		{name: "falls back to template when no alias", title: "", alias: "", canonicalTemplate: "gc/lead", want: "gc/lead"},
+		{name: "alias preferred over template", title: "", alias: "custom-alias", canonicalTemplate: "gc/lead", want: "custom-alias"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := defaultSessionTitle(tt.title, tt.alias, tt.canonicalTemplate)
+			if got != tt.want {
+				t.Errorf("defaultSessionTitle(%q, %q, %q) = %q, want %q",
+					tt.title, tt.alias, tt.canonicalTemplate, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestShouldAttachNewSession(t *testing.T) {
 	tests := []struct {
 		name      string
